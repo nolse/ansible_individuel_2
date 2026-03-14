@@ -1,0 +1,46 @@
+---
+# Désinstallation complète de l'application Nginx système
+- hosts: prod
+  become: true
+
+  tasks:
+    - name: Arrêter le service nginx
+      service:
+        name: nginx
+        state: stopped
+      tags: nginx
+
+    - name: Désactiver nginx au démarrage
+      service:
+        name: nginx
+        enabled: no
+      tags: nginx
+
+    - name: Désinstaller nginx
+      package:
+        name: nginx
+        state: absent
+      tags: nginx
+
+    - name: Supprimer les fichiers HTML déployés
+      file:
+        path: /var/www/html/index.html
+        state: absent
+      tags: deploy
+
+    - name: Supprimer le jeu Playbook Stacker
+      file:
+        path: /var/www/html/playbook_stacker
+        state: absent
+      tags: deploy
+
+    - name: Vérifier que nginx est bien arrêté
+      shell: "ss -tlnp | grep :80 || echo 'port 80 libre'"
+      register: port_check
+      changed_when: false
+      tags: always
+
+    - name: Afficher l'état du port 80
+      debug:
+        msg: "{{ port_check.stdout }}"
+      tags: always

@@ -1,0 +1,82 @@
+---
+# =============================================================================
+# Smoke tests post-déploiement
+# Vérifie que nginx système est correctement déployé et accessible
+# Usage : ansible-playbook smoke_tests.yml
+# =============================================================================
+- hosts: prod
+  become: true
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # SERVICE : vérifier que nginx est actif
+    # -------------------------------------------------------------------------
+    - name: Vérifier que le service nginx est running
+      service_facts:
+      tags: always
+
+    - name: Échouer si nginx n'est pas running
+      fail:
+        msg: "Le service nginx n'est pas running !"
+      when: ansible_facts.services['nginx.service'].state != 'running'
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # FICHIERS : vérifier que le contenu est déployé
+    # -------------------------------------------------------------------------
+    - name: Vérifier que index.html est présent
+      stat:
+        path: /var/www/html/index.html
+      register: index_file
+      tags: always
+
+    - name: Échouer si index.html est absent
+      fail:
+        msg: "Le fichier index.html n'est pas déployé !"
+      when: not index_file.stat.exists
+      tags: always
+
+    - name: Vérifier que le jeu Playbook Stacker est présent
+      stat:
+        path: /var/www/html/playbook_stacker
+      register: stacker_dir
+      tags: always
+
+    - name: Échouer si Playbook Stacker est absent
+      fail:
+        msg: "Le jeu Playbook Stacker n'est pas déployé !"
+      when: not stacker_dir.stat.exists
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # PORT : vérifier que le port 80 est ouvert
+    # -------------------------------------------------------------------------
+    - name: Vérifier que le port 80 est ouvert
+      shell: ss -tlnp | grep :80
+      register: port_check
+      changed_when: false
+      failed_when: port_check.rc != 0
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # HTTP : vérifier que l'application répond HTTP 200
+    # -------------------------------------------------------------------------
+    - name: Vérifier que l'application répond HTTP 200
+      uri:
+        url: "http://{{ ansible_host }}"
+        status_code: 200
+      register: http_check
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # RAPPORT FINAL
+    # -------------------------------------------------------------------------
+    - name: Afficher le rapport des smoke tests
+      debug:
+        msg:
+          - "✅ nginx service  : running"
+          - "✅ index.html     : présent"
+          - "✅ stacker game   : présent"
+          - "✅ port 80        : ouvert"
+          - "✅ HTTP 200       : {{ http_check.status }}"
+      tags: always

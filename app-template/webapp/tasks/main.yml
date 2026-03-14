@@ -1,0 +1,44 @@
+---
+# =============================================================================
+# Rôle : webapp
+# Description : Déploie l'application web dans un conteneur Docker (nginx)
+#               accessible via le proxy nginx (rôle nginx)
+# Dépendance  : Le réseau Docker "custom_net" doit exister (créé par rôle nginx)
+# Variables attendues :
+#   - container_name : nom du conteneur (ex: webapp1)
+#   - app_port       : port applicatif (ex: 8082)
+#   - target_dir     : répertoire des fichiers HTML sur l'hôte
+# =============================================================================
+
+- name: Créer le répertoire cible pour les fichiers de l'application
+  file:
+    path: "{{ target_dir }}"
+    state: directory
+    mode: '0755'
+  tags: webapp
+
+- name: Déployer le fichier index.html depuis le template
+  template:
+    src: index.html-base.j2
+    dest: "{{ target_dir }}/index.html"
+    mode: '0644'
+  tags: webapp
+
+- name: Pull de l'image Docker pour la webapp
+  docker_image:
+    name: nginx
+    tag: latest
+    source: pull
+  tags: webapp
+
+- name: Lancer le conteneur webapp
+  docker_container:
+    name: "{{ container_name }}"
+    image: nginx:latest
+    state: started
+    restart_policy: always
+    networks:
+      - name: custom_net
+    volumes:
+      - "{{ target_dir }}:/usr/share/nginx/html:ro"
+  tags: webapp

@@ -1,0 +1,79 @@
+---
+# =============================================================================
+# Smoke tests post-déploiement
+# Vérifie que l'application est correctement déployée et accessible
+# Usage : ansible-playbook smoke_tests.yml
+# =============================================================================
+- hosts: prod
+  become: true
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # CONTENEURS : vérifier que webapp1 et nginx tournent
+    # -------------------------------------------------------------------------
+    - name: Vérifier que le conteneur webapp1 est running
+      docker_container_info:
+        name: webapp1
+      register: webapp1_info
+      tags: always
+
+    - name: Échouer si webapp1 n'est pas running
+      fail:
+        msg: "Le conteneur webapp1 n'est pas running !"
+      when: not webapp1_info.container.State.Running
+      tags: always
+
+    - name: Vérifier que le conteneur nginx est running
+      docker_container_info:
+        name: nginx
+      register: nginx_info
+      tags: always
+
+    - name: Échouer si nginx n'est pas running
+      fail:
+        msg: "Le conteneur nginx n'est pas running !"
+      when: not nginx_info.container.State.Running
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # RÉSEAU : vérifier que custom_net existe
+    # -------------------------------------------------------------------------
+    - name: Vérifier que le réseau custom_net existe
+      shell: docker network ls | grep custom_net
+      register: network_check
+      changed_when: false
+      failed_when: network_check.rc != 0
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # PORT : vérifier que le port 80 est exposé
+    # -------------------------------------------------------------------------
+    - name: Vérifier que le port 80 est ouvert
+      shell: ss -tlnp | grep :80
+      register: port_check
+      changed_when: false
+      failed_when: port_check.rc != 0
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # HTTP : vérifier que l'application répond HTTP 200
+    # -------------------------------------------------------------------------
+    - name: Vérifier que l'application répond HTTP 200
+      uri:
+        url: "http://{{ ansible_host }}"
+        status_code: 200
+      register: http_check
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # RAPPORT FINAL
+    # -------------------------------------------------------------------------
+    - name: Afficher le rapport des smoke tests
+      debug:
+        msg:
+          - "✅ webapp1     : running"
+          - "✅ nginx       : running"
+          - "✅ custom_net  : présent"
+          - "✅ port 80     : ouvert"
+          - "✅ HTTP 200    : {{ http_check.status }}"
+      tags: always

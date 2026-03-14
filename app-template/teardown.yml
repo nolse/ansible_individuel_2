@@ -1,0 +1,46 @@
+---
+# Désinstallation complète de l'application Docker (rôles nginx + webapp)
+- hosts: prod
+  become: true
+
+  tasks:
+    - name: Arrêter et supprimer le conteneur webapp1
+      docker_container:
+        name: webapp1
+        state: absent
+      tags: webapp
+
+    - name: Arrêter et supprimer le conteneur nginx
+      docker_container:
+        name: nginx
+        state: absent
+      tags: nginx
+
+    - name: Supprimer le réseau Docker custom_net
+      community.docker.docker_network:
+        name: custom_net
+        state: absent
+      tags: nginx
+
+    - name: Supprimer les fichiers HTML déployés
+      file:
+        path: /var/www/html/index.html
+        state: absent
+      tags: webapp
+
+    - name: Supprimer la configuration nginx copiée
+      file:
+        path: /tmp/nginx.conf
+        state: absent
+      tags: nginx
+
+    - name: Vérifier qu'aucun conteneur ne tourne
+      shell: docker ps
+      register: docker_ps_output
+      changed_when: false
+      tags: always
+
+    - name: Afficher l'état des conteneurs
+      debug:
+        msg: "{{ docker_ps_output.stdout_lines }}"
+      tags: always

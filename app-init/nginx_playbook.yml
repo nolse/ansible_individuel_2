@@ -1,0 +1,78 @@
+---
+# YAML documents begin with the document separator ---
+# The minus in YAML this indicates a list item.  The playbook contains a list
+# of plays, with each play being a dictionary
+-
+  # Hosts: where our play will run and options it will run with
+  hosts: prod
+  become: true
+
+  # Vars: variables that will apply to the play, on all target systems
+  vars_files:
+    - vars/logos.yaml
+
+  # Tasks: the list of tasks that will be executed within the play, this section
+  # can also be used for pre and post tasks
+  tasks:
+    - name: Définir la variable nginx_root_location en fonction de la distribution
+      set_fact:
+        nginx_root_location: "/usr/share/nginx/html"
+      when: ansible_os_family == "RedHat"
+      tags: always    # toujours exécuté car les autres tâches dépendent de cette variable
+
+    - name: Définir la variable nginx_root_location pour Ubuntu
+      set_fact:
+        nginx_root_location: "/var/www/html"
+      when: ansible_os_family == "Debian"
+      tags: always    # toujours exécuté car les autres tâches dépendent de cette variable
+
+    - name: Install EPEL
+      yum:
+        name: epel-release
+        update_cache: yes
+        state: latest
+      when: ansible_distribution == 'CentOS'
+      tags: install   # uniquement lors d'une installation
+
+    - name: Install Nginx
+      package:
+        name: nginx
+        state: latest
+      tags: install   # uniquement lors d'une installation
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+      notify: Check HTTP Service
+      tags: install   # uniquement lors d'une installation
+
+    - name: Template index.html-easter_egg.j2 to index.html on target
+      template:
+        src: index.html-easter_egg.j2
+        dest: "{{ nginx_root_location }}/index.html"
+        mode: 0644
+      tags: deploy    # uniquement lors d'un déploiement de contenu
+
+    - name: Install unzip
+      package:
+        name: unzip
+        state: latest
+      tags: install   # uniquement lors d'une installation
+
+    - name: Unarchive playbook stacker game
+      unarchive:
+        src: playbook_stacker.zip
+        dest: "{{ nginx_root_location }}"
+        mode: 0755
+      tags: deploy    # uniquement lors d'un déploiement de contenu
+
+  # Handlers: the list of handlers that are executed as a notify key from a task
+  handlers:
+    - name: Check HTTP Service
+      uri:
+        url: http://{{ ansible_default_ipv4.address }}
+        status_code: 200
+
+# Three dots indicate the end of a YAML document
+...

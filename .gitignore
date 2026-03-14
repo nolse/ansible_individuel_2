@@ -1,0 +1,6 @@
+# Fichier mot de passe Vault (ne jamais commiter !)
+.vault_pass
+*.retry
+__pycache__/
+*.pyc
+.vagrant/

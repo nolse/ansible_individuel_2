@@ -1,0 +1,20 @@
+---
+- hosts: prod
+  become: true
+  roles:
+    - role: nginx
+    - role: webapp
+      vars:
+        container_name: "webapp1"
+        app_port: 8082
+        target_dir: "/var/www/html"
+
+  post_tasks:
+    # nginx a démarré avant webapp1 → DNS "webapp1" était introuvable
+    # On le redémarre une fois webapp1 bien up sur le réseau custom_net
+    - name: Redémarrer nginx après démarrage de webapp1
+      docker_container:
+        name: nginx
+        state: started
+        restart: yes
+      tags: always
