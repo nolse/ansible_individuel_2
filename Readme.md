@@ -418,10 +418,10 @@ post_tasks:
 <p align="center">
   <img src="./images/NAVIGWEB1_PLAYBOOK_STAKER.png" width="600">
   <img src="./images/WEB_APP_PLAYBOOK_STAKER2png.png" width="600"><br><br>
-  <img src="./images/DEPLOY_PLAY_STACKER2.png" width="600"><br><br>
   <img src="./images/WEBAPP1_NGINX.png" width="600"><br><br>
   <img src="./images/Finally_STARKERUP.png" width="600"><br><br>
   <img src="./images/DEPLOY_PLAY_STAKER23.png" width="600"><br><br>
+  <img src="./images/DEPLOY_PLAY_STACKER2.png" width="600"><br><br>
 </p>
 
 ---
