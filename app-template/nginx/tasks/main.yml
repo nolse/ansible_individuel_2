@@ -3,6 +3,7 @@
   community.docker.docker_network:
     name: custom_net
     driver: bridge
+  timeout: 120
   tags: nginx
 
 - name: Pull Nginx Docker image
@@ -10,6 +11,7 @@
     name: nginx
     tag: latest
     source: pull
+  timeout: 120
   tags: nginx
 
 - name: Copier la configuration Nginx
@@ -19,6 +21,7 @@
     owner: root
     group: root
     mode: '0644'
+  timeout: 120
   tags: nginx
 
 - name: Run Nginx container
@@ -32,10 +35,12 @@
       - name: custom_net
     volumes:
       - /tmp/nginx.conf:/etc/nginx/nginx.conf:ro
+  timeout: 120
   tags: nginx
 
 - name: Ensure Nginx container is running
   docker_container:
     name: nginx
     state: started
+  timeout: 120
   tags: nginx

@@ -1,30 +1,50 @@
 ---
-# =============================================================================
-# Rôle : webapp
-# Description : Déploie l'application web dans un conteneur Docker (nginx)
-#               accessible via le proxy nginx (rôle nginx)
-# Dépendance  : Le réseau Docker "custom_net" doit exister (créé par rôle nginx)
-# Variables attendues :
-#   - container_name : nom du conteneur (ex: webapp1)
-#   - app_port       : port applicatif (ex: 8082)
-#   - target_dir     : répertoire des fichiers HTML sur l'hôte
-# =============================================================================
-
-- name: Créer le répertoire cible pour les fichiers de l'application
+- name: Creer le repertoire cible
   file:
     path: "{{ target_dir }}"
     state: directory
+    recurse: yes
     mode: '0755'
+    owner: www-data
+    group: www-data
   tags: webapp
 
-- name: Déployer le fichier index.html depuis le template
+- name: Deployer le fichier index.html
   template:
     src: index.html-base.j2
     dest: "{{ target_dir }}/index.html"
     mode: '0644'
+    owner: www-data
+    group: www-data
   tags: webapp
 
-- name: Pull de l'image Docker pour la webapp
+- name: Installer unzip
+  package:
+    name: unzip
+    state: latest
+  tags: webapp
+
+- name: Creer le repertoire playbook_stacker
+  file:
+    path: "{{ target_dir }}/playbook_stacker"
+    state: directory
+    recurse: yes
+    mode: '0755'
+    owner: www-data
+    group: www-data
+  tags: webapp
+
+- name: Deployer le jeu Playbook Stacker
+  unarchive:
+    src: "{{ role_path }}/files/playbook_stacker.zip"
+    dest: "{{ target_dir }}/playbook_stacker"
+    remote_src: no
+    mode: '0755'
+    owner: www-data
+    group: www-data
+  tags: webapp
+
+- name: Pull de l image Docker pour la webapp
   docker_image:
     name: nginx
     tag: latest
