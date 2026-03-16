@@ -422,6 +422,11 @@ post_tasks:
   <img src="./images/Finally_STARKERUP.png" width="600"><br><br>
   <img src="./images/DEPLOY_PLAY_STAKER23.png" width="600"><br><br>
   <img src="./images/DEPLOY_PLAY_STACKER2.png" width="600"><br><br>
+  <img src="./images/EAZYLABS1.png" width="600"><br><br>
+  <img src="./images/EAZYLABS2.png" width="600"><br><br>
+  <img src="./images/EAZYLABS3.png" width="600"><br><br>
+  <img src="./images/EAZYLABS4_2.png" width="600"><br><br>
+  <img src="./images/EAZYLABS5_2.png" width="600"><br><br>
 </p>
 
 ---
